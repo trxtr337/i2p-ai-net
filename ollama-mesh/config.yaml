@@ -12,7 +12,7 @@ bot:
 network:
   listen_port: 11450
   ollama_url: http://127.0.0.1:11434
-  my_b32: ''
+  my_b32: 'rdsa4edizqufpj4vrzlafojy6dmsj6v6ucoja7tacwteigd3olwa.b32.i2p:11450'
   i2pd_tunnels_dir: /etc/i2pd/tunnels.d/
   peer_port_start: 11460
 chat:

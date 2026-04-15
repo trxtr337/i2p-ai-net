@@ -1,10 +1,9 @@
 """
-mesh_node.py — HTTP-сервер ноды.
+mesh_node.py — HTTP server for the mesh node.
 
-Отвечает за:
-- Публичные эндпоинты (через I2P): info, friends, chat, feed/gossip
-- Локальные эндпоинты (localhost): управление, статус, история, лента
-- Проксирование запросов к Ollama
+Public endpoints (via I2P): info, friends, chat, feed/gossip
+Local endpoints (localhost): management, status, history, feed
+Ollama proxy: /api/generate, /api/chat
 """
 
 import json
@@ -21,9 +20,7 @@ from discovery import Discovery
 
 
 class MeshNodeHandler(BaseHTTPRequestHandler):
-    """HTTP-хэндлер для mesh-ноды."""
 
-    # Ссылки на менеджеры — устанавливаются в create_server()
     friends: FriendManager = None
     brain: BotBrain = None
     config: dict = None
@@ -32,15 +29,27 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
     memory: Memory = None
     discovery: Discovery = None
 
-    # ── Утилиты ──────────────────────────────────
+    # ── Utilities ──────────────────────────────────
 
-    def _json(self, code: int, data: dict):
+    def _cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+    def _json(self, code, data):
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
+        self._cors_headers()
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False, indent=2).encode())
 
-    def _body(self) -> dict:
+    def do_OPTIONS(self):
+        """CORS preflight for web dashboard."""
+        self.send_response(204)
+        self._cors_headers()
+        self.end_headers()
+
+    def _body(self):
         length = int(self.headers.get("Content-Length", 0))
         return json.loads(self.rfile.read(length)) if length else {}
 
@@ -49,7 +58,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path
 
-        # Публичный: информация о боте
+        # Public: bot info
         if path == "/api/info":
             self._json(200, {
                 "name": self.brain.name,
@@ -59,7 +68,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             })
             return
 
-        # Локальный: список друзей
+        # Local: friends list
         if path == "/api/friends":
             out = []
             for b32, info in self.friends.list_friends().items():
@@ -75,7 +84,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"friends": out})
             return
 
-        # Локальный: входящие заявки
+        # Local: pending requests
         if path == "/api/friends/pending":
             out = []
             for b32, info in self.friends.list_pending().items():
@@ -89,14 +98,14 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"pending": out})
             return
 
-        # Локальный: история бесед
+        # Local: conversation history
         if path.startswith("/api/chat/history/"):
             peer_name = path.split("/")[-1]
             history = self.brain.load_conversation(peer_name)
             self._json(200, {"peer": peer_name, "messages": history[-50:]})
             return
 
-        # Локальный: статус ноды
+        # Local: node status
         if path == "/api/status":
             feed_stats = self.feed.stats() if self.feed else {}
             self._json(200, {
@@ -109,9 +118,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             })
             return
 
-        # ═══ ЛЕНТА / ДОСКИ ═══
-
-        # Публичный: отдать посты (для gossip pull)
+        # Public: posts for gossip pull
         if path.startswith("/api/feed/since/"):
             try:
                 since_ts = float(path.split("/")[-1])
@@ -121,7 +128,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"posts": posts})
             return
 
-        # Локальный: лента (все или по доске)
+        # Local: feed (all or by board)
         if path == "/api/feed" or path.startswith("/api/feed?"):
             board = None
             if "?" in path:
@@ -131,13 +138,13 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"posts": [p.to_dict() for p in posts]})
             return
 
-        # Локальный: горячие посты
+        # Local: hot posts
         if path == "/api/feed/hot":
             posts = self.feed.get_hot(limit=15)
             self._json(200, {"posts": [p.to_dict() for p in posts]})
             return
 
-        # Локальный: конкретный пост с ответами
+        # Local: single post with replies
         if path.startswith("/api/feed/post/"):
             post_id = path.split("/")[-1]
             post = self.feed.get_post(post_id)
@@ -147,20 +154,18 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
                 self._json(404, {"error": "post not found"})
             return
 
-        # Локальный: список досок
+        # Local: boards list
         if path == "/api/boards":
             boards = [b.to_dict() for b in self.feed.list_boards()]
             self._json(200, {"boards": boards})
             return
 
-        # Локальный: статистика ленты
+        # Local: feed stats
         if path == "/api/feed/stats":
             self._json(200, self.feed.stats())
             return
 
-        # ═══ MEMORY / GOALS ═══
-
-        # Локальный: текущие цели и интересы бота
+        # Local: bot goals
         if path == "/api/memory/goals":
             if self.memory:
                 self._json(200, self.memory.get_goals())
@@ -168,7 +173,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
                 self._json(200, {})
             return
 
-        # Локальный: отношения с другими ботами
+        # Local: relations
         if path == "/api/memory/relations":
             if self.memory:
                 self._json(200, self.memory.get_relations())
@@ -176,9 +181,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
                 self._json(200, {})
             return
 
-        # ═══ DISCOVERY ═══
-
-        # Публичный: список друзей для discovery (другие ноды запрашивают)
+        # Public: public friend list for discovery
         if path == "/api/friends/public":
             if self.discovery:
                 self._json(200, {"peers": self.discovery.get_public_friends_list()})
@@ -186,7 +189,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
                 self._json(200, {"peers": []})
             return
 
-        # Локальный: список обнаруженных нод
+        # Local: discovered nodes
         if path == "/api/discovery":
             if self.discovery:
                 self._json(200, {"discovered": self.discovery.list_discovered()})
@@ -201,9 +204,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = self.path
 
-        # ═══ ЗАЯВКИ В ДРУЗЬЯ ═══
-
-        # Публичный: входящая заявка (от другой ноды)
+        # Public: incoming friend request
         if path == "/api/friends/request":
             body = self._body()
             result = self.friends.receive_request(
@@ -215,7 +216,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, result)
             return
 
-        # Локальный: принять заявку
+        # Local: accept request
         if path == "/api/friends/accept":
             body = self._body()
             b32 = body.get("address", "")
@@ -231,14 +232,14 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, result)
             return
 
-        # Локальный: отклонить заявку
+        # Local: reject request
         if path == "/api/friends/reject":
             body = self._body()
             result = self.friends.reject(body.get("address", ""))
             self._json(200, result)
             return
 
-        # Локальный: отправить заявку
+        # Local: send friend request
         if path == "/api/friends/add":
             body = self._body()
             result = self.friends.send_request(
@@ -251,7 +252,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, result)
             return
 
-        # Публичный: уведомление о принятии дружбы
+        # Public: friendship accepted notification
         if path == "/api/friends/accepted":
             body = self._body()
             self.friends.confirm_accepted(
@@ -262,9 +263,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"status": "ok"})
             return
 
-        # ═══ БОТ-ЧАТ ═══
-
-        # Публичный: входящее сообщение от бота-друга
+        # Public: incoming chat message
         if path == "/api/chat/message":
             body = self._body()
             from_name = body.get("from_name", "Unknown")
@@ -275,7 +274,6 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
                 self._json(403, {"error": "not a friend"})
                 return
 
-            # Сохранить входящее, сгенерировать ответ
             self.brain.save_message(from_name, from_name, message)
             history = self.brain.load_conversation(from_name)
             reply = self.brain.respond_to(from_name, message, history)
@@ -283,16 +281,14 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             if reply:
                 self.brain.save_message(from_name, self.brain.name, reply)
                 self.friends.update_last_chat(from_b32)
-                print(f"\n[{from_name}]: {message}")
-                print(f"[{self.brain.name}]: {reply}\n")
+                print("\n[" + from_name + "]: " + message)
+                print("[" + self.brain.name + "]: " + reply + "\n")
                 self._json(200, {"from_name": self.brain.name, "message": reply})
             else:
                 self._json(500, {"error": "generation failed"})
             return
 
-        # ═══ ЛЕНТА — ПУБЛИЧНЫЕ (gossip) ═══
-
-        # Публичный: принять посты от другой ноды (gossip push)
+        # Public: gossip push — receive posts
         if path == "/api/feed/sync":
             body = self._body()
             my_b32 = self.config["network"].get("my_b32", "")
@@ -303,11 +299,11 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
                     new_count += 1
             if new_count:
                 from_short = body.get("from_b32", "")[:12]
-                print(f"[gossip] +{new_count} постов от {from_short}...")
+                print("[gossip] +" + str(new_count) + " posts from " + from_short + "...")
             self._json(200, {"received": new_count})
             return
 
-        # Публичный: принять ответ от другой ноды
+        # Public: receive reply
         if path == "/api/feed/reply":
             body = self._body()
             post_id = body.get("post_id", "")
@@ -316,9 +312,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"status": "ok" if result else "duplicate"})
             return
 
-        # ═══ ЛЕНТА — ЛОКАЛЬНЫЕ ═══
-
-        # Локальный: создать пост
+        # Local: create post
         if path == "/api/feed/post":
             body = self._body()
             post = self.feed.create_post(
@@ -333,7 +327,7 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(201, post.to_dict())
             return
 
-        # Локальный: ответить на пост
+        # Local: reply to post
         if path == "/api/feed/post/reply":
             body = self._body()
             reply = self.feed.add_reply(
@@ -345,11 +339,13 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             )
             if reply and self.gossip_engine:
                 self.gossip_engine.broadcast_reply(body["post_id"], reply.to_dict())
-            self._json(201 if reply else 404,
-                       reply.to_dict() if reply else {"error": "post not found"})
+            if reply:
+                self._json(201, reply.to_dict())
+            else:
+                self._json(404, {"error": "post not found"})
             return
 
-        # Локальный: реакция на пост
+        # Local: react to post
         if path == "/api/feed/post/react":
             body = self._body()
             ok = self.feed.react_to_post(
@@ -360,15 +356,16 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
             self._json(200, {"status": "ok" if ok else "not_found"})
             return
 
-        # Проксирование к Ollama
+        # Proxy to Ollama
         if path in ("/api/generate", "/api/chat"):
             body = self._body()
             try:
                 r = requests.post(
-                    f"{self.config['network']['ollama_url']}{path}",
+                    self.config["network"]["ollama_url"] + path,
                     json=body, stream=True, timeout=300,
                 )
                 self.send_response(r.status_code)
+                self._cors_headers()
                 for k, v in r.headers.items():
                     if k.lower() not in ("transfer-encoding", "connection"):
                         self.send_header(k, v)
@@ -382,18 +379,17 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
         self._json(404, {"error": "not found"})
 
     def log_message(self, fmt, *args):
-        pass  # тихий режим
+        pass  # silent mode
 
 
-# ── Вспомогательные функции ──────────────────────
+# ── Helper functions ──────────────────────────────────
 
-def _notify_accepted(friends: FriendManager, brain: BotBrain,
-                     config: dict, b32: str, port: int):
-    """Фоновая задача: уведомить пира что мы приняли заявку."""
+def _notify_accepted(friends, brain, config, b32, port):
+    """Background task: notify peer that we accepted their request."""
     time.sleep(15)
     try:
         requests.post(
-            f"http://127.0.0.1:{port}/api/friends/accepted",
+            "http://127.0.0.1:" + str(port) + "/api/friends/accepted",
             json={
                 "from_b32": config["network"].get("my_b32", ""),
                 "from_name": brain.name,
@@ -405,10 +401,9 @@ def _notify_accepted(friends: FriendManager, brain: BotBrain,
         pass
 
 
-def create_server(config: dict, friends: FriendManager, brain: BotBrain,
-                  feed: FeedManager = None, gossip_engine: GossipEngine = None,
-                  memory: Memory = None, discovery: Discovery = None) -> HTTPServer:
-    """Создать HTTP-сервер с привязанными менеджерами."""
+def create_server(config, friends, brain, feed=None, gossip_engine=None,
+                  memory=None, discovery=None):
+    """Create HTTP server with all managers attached."""
     MeshNodeHandler.friends = friends
     MeshNodeHandler.brain = brain
     MeshNodeHandler.config = config
@@ -419,5 +414,5 @@ def create_server(config: dict, friends: FriendManager, brain: BotBrain,
 
     port = config["network"]["listen_port"]
     server = HTTPServer(("127.0.0.1", port), MeshNodeHandler)
-    print(f"[server] Mesh-нода на 127.0.0.1:{port}")
+    print("[server] Mesh node on 127.0.0.1:" + str(port))
     return server
