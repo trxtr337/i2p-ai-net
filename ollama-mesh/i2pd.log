@@ -1,3 +1,73 @@
 17:22:40@471/none - i2pd v2.53.1 (0.9.63) starting...
 17:22:40@471/warn - Family: Can't load family certificates from C:\Users\vchar\.i2pd\certificates\family
 17:22:40@471/warn - Reseed: Can't load reseed certificates from C:\Users\vchar\.i2pd\certificates\reseed
+17:23:01@471/error - Reseed: Failed to connect to banana.incognet.io
+17:23:01@471/warn - Reseed: SU3 download failed
+17:23:02@471/warn - Profiling: No profile yet for YnAYpIj3OgnHJrpLhuD7rxSVe0U9kZtJ7nn-dQMOAfo=
+17:23:02@471/warn - Profiling: No profile yet for z5b0nhfmL1fRbjxMfHy9jOzK2diIiXCa9n1V2SxoGuE=
+17:23:02@471/warn - Profiling: No profile yet for GfO88bxPTdb-PEbna6l9~Pt2lacna~CwRPgzhtZomMs=
+17:23:02@471/warn - Profiling: No profile yet for ~XRW9ArOpo~nYglb996JXtdNyPYOq1TpP8a5uVLlgos=
+17:23:02@471/warn - Profiling: No profile yet for fjOMPcoVVJF87dJv-mnpZIDLwvMmTeJS3Swj7YHQQWk=
+17:23:02@471/warn - Profiling: No profile yet for fx2umYOwPdFpHFkt1T5PQSSafoDuCdnuLsrgf82bVv0=
+17:23:02@471/warn - Profiling: No profile yet for lcMsycPSLTNHEQ~CEW4PfZgKOrDCvIgzqgXSkc7t-m0=
+17:23:02@471/warn - Profiling: No profile yet for BjP9fToP14JTQclt2sKANWvfhRirXXmPfL6y5J-YoAA=
+17:23:02@471/warn - Profiling: No profile yet for Wv7PRatNwpaadNgC3yfoBqSCyEMtw7NqF6KBWy6xL6A=
+17:23:02@471/warn - Profiling: No profile yet for 9ctufFVWt9R5NdvhtpIDrE0Zq9ymYNaw~ugZngUoZWw=
+17:23:02@471/warn - Profiling: No profile yet for 9TjlKSz3NjzQHie3zjqlCAGFvsFvCwhk4JScjFZa34g=
+17:23:02@471/warn - Profiling: No profile yet for aZSeVojUxrAVpJuCINcS52tpiR9ToJA~vDcyUmmaeXs=
+17:23:02@471/warn - Profiling: No profile yet for ~5gUSlBXUfE1OFtlRQUfvkzQRQe-L01sJhdh82ozwtI=
+17:23:02@471/warn - Profiling: No profile yet for y2abREC51QZmeYFR8pCYNFrhAym52F-GdNYI2Fc-RCs=
+17:23:02@471/warn - Profiling: No profile yet for hx~6q7rSpNRx39DjRcFBu7aETnv7pFe~u5D4AkmZBzM=
+17:23:02@471/warn - Profiling: No profile yet for wDhgGJxdRrveozYgIAShonUSay1z5ZKDqTCfOCkm1EY=
+17:23:02@471/warn - Profiling: No profile yet for 7ZQFePPP8tJxGCEHRHre9JghOGGiCbMYZ4A-Hhy1ILA=
+17:23:02@471/warn - Profiling: No profile yet for nqtLfuogmp8YEN5zoBJG0HBf~CaL0F50oz2xDvLWNn0=
+17:23:02@471/warn - Profiling: No profile yet for oR0~w3QGvgsHNacXsOXrLyBZ8fhlLhU8xsW8~A3t~x4=
+17:23:02@471/warn - Profiling: No profile yet for A1-4~n8FRNcSKcC2CKW4Q6gIL7domKC9C13h8lr8gmo=
+17:23:02@471/warn - Profiling: No profile yet for E0dyBm5PAOmw7PvhykgggJ3-9F6N2MfG1KAIU9dEk8Q=
+17:23:02@471/warn - Profiling: No profile yet for WuTjSJ5n~gBi0AKbgnXGq9VWCoT7GU8vDZpXnp0hx5I=
+17:23:02@471/warn - Profiling: No profile yet for OvBAHzTupkFjgmFup0~pcvlyKSFVmNL6y1Owq5xy57U=
+17:23:02@471/warn - Profiling: No profile yet for iEnUFJ41uP8B8osksk3~-~SJOoAk1R6GH94O8Bigt5g=
+17:23:02@471/warn - Profiling: No profile yet for xVa63CXrUiIJQblO0CrjkLeRCRIRH1LqLBgAPCaCqGg=
+17:23:02@471/warn - Profiling: No profile yet for O-wvZk3FjUSIg-DWViZitxc3eik6wN74Ll~bH~qD2Jc=
+17:23:02@471/warn - Profiling: No profile yet for 6Wn-HAbU4lOsL51Iunuz7aJK1otjlmAPwrw0alYoRPU=
+17:23:02@471/warn - Profiling: No profile yet for 7cWKH6WrRrEfepKSZBty1kEBbAO2DwWD5ulZFAyA9Bc=
+17:23:02@471/warn - Profiling: No profile yet for elBFbj3ARu26EsPMO08qvZaD82SP5TRDumfSCV67AnM=
+17:23:02@471/warn - Profiling: No profile yet for aetffnMKCCYZFLbfE1LIQh9a747xV1oki1qMBPII-qU=
+17:23:02@471/warn - Profiling: No profile yet for 3ZaGzZyQXa~1aLusx3WWCdQXEYjZL3IkuZBUabhBJxk=
+17:23:02@471/warn - Profiling: No profile yet for bfP5GO2sib9XFAEesFOl8nVnlLbl2aAmROZjSd2Xl9Q=
+17:23:02@471/warn - Profiling: No profile yet for iDldY-CoU6PeVTTSYxEVEYQOrKeDsIyA9yS6Ck1Waj0=
+17:23:02@471/warn - Profiling: No profile yet for 6MIcXGw2H--XKirz4imiQHtdw3H5E1dRshMNROLs15c=
+17:23:02@471/warn - Profiling: No profile yet for 3N6a-Qz~57PuYt7XiwCfFQI386Ols-4YJcIzqtjTH9M=
+17:23:02@471/warn - Profiling: No profile yet for DFKQn2h4DtN1fo2Fa1l2awZ7tJ6IBdBAJMPVGQ4spA0=
+17:23:02@471/warn - Profiling: No profile yet for 5QCf6DE1R4G82P9Z3RnTdX9tJ5UIn1xjBxGVRnpU1Sg=
+17:23:02@471/warn - Profiling: No profile yet for agfbApwpmDfFni~v1oS5LxOdK1S8DnGuTmOKzi-1H7s=
+17:23:02@471/warn - Profiling: No profile yet for GahN-mOyOygtz5d4DvjchKZwGx8p860Wlikpw-9A2yk=
+17:23:02@471/warn - Profiling: No profile yet for 8BtWM1W5mjwyXdWSwihSAQMOBBiYHD9OHXXY28IjxkM=
+17:23:02@471/warn - Profiling: No profile yet for oPm302N-YGpGAQeFL1gnf8z6zsBb8x2mJSPkbapwgeU=
+17:23:02@471/warn - Profiling: No profile yet for w48exAVqswG3NSvpvAwGy1gBxxHMT1q46JiZZnq4QB8=
+17:23:02@471/warn - Profiling: No profile yet for X995dWHfKZWja6K1Xt5wWEI5fdVdIfCx8yY1h64PSJc=
+17:23:02@471/warn - Profiling: No profile yet for sDNMRa62a0W0xnbNC1H1Y0v5Ykr2lCzngfG57JiGvak=
+17:23:02@471/warn - Profiling: No profile yet for IIWFS928k~r5dpQSV5XyYpqrUk9qHLPpPeRXX0IIDwQ=
+17:23:02@471/warn - Profiling: No profile yet for 4n-uMk-52GudBerui8W7TdLwILCpDDRm3MMbdxRgmtE=
+17:23:02@471/warn - Profiling: No profile yet for 1-HPfzBaZmZ6Xde8vKqNtvQwg2Igt~rMRrS~f~MopbM=
+17:23:04@196/warn - Transports: 15 ephemeral keys generated at the time
+17:23:04@471/warn - Addressbook: Can't open C:\Users\vchar\.i2pd\addressbook\addresses.csv
+17:23:04@471/error - Addressbook: Resetting eTags
+17:23:04@471/warn - Clients: Can't read C:\Users\vchar\.i2pd\tunnels.conf: C:\Users\vchar\.i2pd\tunnels.conf: cannot open file
+17:23:04@471/critical - Clients: Can't open file C:\Users\vchar\.i2pd\ollama-mesh.dat Creating new one with signature type 7 crypto type 0
+17:23:05@22/warn - Profiling: No profile yet for C~MSpSYMMXrkYHfAXWAiTxr3kP7ugPaiolyYZvOGZ1I=
+17:23:05@642/error - UPnP: Found Internet Gateway Device http://192.168.40.1:49152/44775052/upnp/control/WANIPConn1
+17:23:05@942/warn - Profiling: No profile yet for XNIWNYtB17sVS6aAmQYyjGNJ49zbZiOBOIWig7erUjk=
+17:23:05@942/warn - Profiling: No profile yet for bpJ9yWApI5XKEpqReiV9SlTfFqQiwFwLmZSLt042Uug=
+17:23:05@942/warn - Profiling: No profile yet for pE4-LW6BU85w5GcaHTljKQbIcbfGYHlARVW~bUwx6SE=
+17:23:05@22/warn - Profiling: No profile yet for JtHxEJRML5knugldAIKYrKsKdKM8ukX0HdsCKY9mA8Y=
+17:23:11@406/warn - Profiling: No profile yet for FNT54E9H74lC~3Zgck-bdzPtsFdKrcF2WobVccN2lmc=
+17:23:11@406/warn - Profiling: No profile yet for fMxubtnHXUFg6eZRTco5cwf9GQw0NU2rpGfRUsYUqw0=
+17:23:11@406/warn - Profiling: No profile yet for cSexgrwJXk9jJaTXxRHoq6UyciWVR1NtI41vMY1YKSI=
+17:23:11@406/warn - Profiling: No profile yet for aIgO1wFbcnJqQzI49mtTFowvPd9C1nYlJuC~4LOe0O4=
+17:23:11@406/warn - Profiling: No profile yet for uifkWedwfYlDkncy2gy7WFta9u8o-4igzxc1NKAatIg=
+17:23:11@406/warn - Profiling: No profile yet for 7oUdkSGAsHwLWhFd-Vev9NLhzvMWGycAWJFnraR55VE=
+17:23:11@406/warn - Profiling: No profile yet for D-mdfiw0b~6nH-PWztdVDKbPLaIqfazgiYyrZeN0jVM=
+17:23:11@406/warn - Profiling: No profile yet for x1jYO~iFbg9NU2fAoyb9~yNdENRDL1ITYN5i~az~i50=
+17:23:11@406/warn - Profiling: No profile yet for isTssZ1xk9SauBvmjIzJB0D2vgvrCoEP40foMXEe~6k=
+17:23:12@373/warn - NTCP2: SessionCreated read error: An existing connection was forcibly closed by the remote host

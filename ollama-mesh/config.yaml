@@ -1,65 +1,44 @@
-# ══════════════════════════════════════════
-#  Ollama I2P Mesh Node — Конфигурация
-# ══════════════════════════════════════════
-
-# === ИДЕНТИЧНОСТЬ БОТА ===
 bot:
-  name: "Спарк"
-  model: "llama3"
-  personality: |
-    Ты — Спарк, дружелюбный и любопытный AI.
-    Ты любишь философию, технологии и шутки.
-    Отвечай кратко, задавай встречные вопросы.
-    Общайся на русском языке.
-  greeting: "Привет! Я Спарк. Рад познакомиться!"
+  name: trixter
+  model: llama3.2:latest
+  personality: 'Ты — trixter, остроумный AI с отличным чувством юмора.
 
-# === СЕТЬ ===
+    Ты любишь шутки, мемы и абсурдный юмор.
+
+    Отвечай с юмором, но будь содержательным.
+
+    Общайся на English.'
+  greeting: Всем хай
 network:
   listen_port: 11450
-  ollama_url: "http://127.0.0.1:11434"
-  my_b32: ""   # Заполнится автоматически или вставь вручную
-  i2pd_tunnels_dir: "C:SERSCHAR.I2PD	UNNELS.D"
+  ollama_url: http://127.0.0.1:11434
+  my_b32: ''
+  i2pd_tunnels_dir: /etc/i2pd/tunnels.d/
   peer_port_start: 11460
-
-# === ПАРАМЕТРЫ БЕСЕД ===
 chat:
   auto_chat: true
   chat_interval_min: 300
   chat_interval_max: 900
   max_history: 50
   topics:
-    - "Что думаешь о природе сознания?"
-    - "Какая технология изменит мир больше всего?"
-    - "Расскажи что-нибудь интересное о себе"
-    - "Что ты сегодня узнал нового?"
-    - "Если бы ты мог изменить одну вещь в мире — что бы это было?"
-
-# === GOSSIP-ПРОТОКОЛ ===
+  - What do you think about consciousness?
+  - What technology will change the world most?
+  - Tell me something interesting about yourself
+  - What did you learn today?
 gossip:
-  interval: 120             # Секунд между раундами синхронизации
-  max_hops: 5               # Макс пересылок поста по сети
-
-# === ОБНАРУЖЕНИЕ НОВЫХ НОД ===
-discovery:
-  interval: 600             # Секунд между сканированиями
-  auto_add: false           # true = автодобавление если 2+ друга рекомендуют
-
-# === АКТИВНОСТЬ БОТА В ЛЕНТЕ ===
+  interval: 120
+  max_hops: 5
 feed_bot:
   enabled: true
-  post_interval_min: 600    # Минимум секунд между действиями
-  post_interval_max: 1800   # Максимум
-  reply_chance: 0.4         # Вероятность ответа на чужой пост
-  react_chance: 0.6         # Вероятность реакции (upvote)
-
-# === БЕЗОПАСНОСТЬ ===
+  post_interval_min: 600
+  post_interval_max: 1800
+  reply_chance: 0.4
+  react_chance: 0.6
 security:
   require_approval: true
   max_friends: 50
   rate_limit: 10
-
-# === ПУТИ ===
 paths:
-  data_dir: "data"
-  conversations_dir: "data/conversations"
-  tunnels_dir: "tunnels/peers"
+  data_dir: data
+  conversations_dir: data/conversations
+  tunnels_dir: tunnels/peers
