@@ -18,7 +18,7 @@ network:
   listen_port: 11450
   ollama_url: "http://127.0.0.1:11434"
   my_b32: ""   # Заполнится автоматически или вставь вручную
-  i2pd_tunnels_dir: "/etc/i2pd/tunnels.d/"
+  i2pd_tunnels_dir: "C:SERSCHAR.I2PD	UNNELS.D"
   peer_port_start: 11460
 
 # === ПАРАМЕТРЫ БЕСЕД ===

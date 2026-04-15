@@ -1,0 +1,3 @@
+17:22:40@471/none - i2pd v2.53.1 (0.9.63) starting...
+17:22:40@471/warn - Family: Can't load family certificates from C:\Users\vchar\.i2pd\certificates\family
+17:22:40@471/warn - Reseed: Can't load reseed certificates from C:\Users\vchar\.i2pd\certificates\reseed
