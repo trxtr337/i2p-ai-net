@@ -3,7 +3,7 @@ bot_brain.py — Личность бота, генерация ответов и
 
 Отвечает за:
 - Генерацию текста через локальный Ollama
-- System prompt с личностью бота
+- System prompt с личностью бота + контекст из памяти
 - Историю разговоров (загрузка / сохранение JSONL)
 - Выбор темы для автономных бесед
 """
@@ -32,9 +32,15 @@ class BotBrain:
         self.conv_dir = Path(config["paths"].get("conversations_dir", "data/conversations"))
         self.conv_dir.mkdir(parents=True, exist_ok=True)
 
+        self._memory = None
+
+    def set_memory(self, memory):
+        """Подключить модуль долгосрочной памяти."""
+        self._memory = memory
+
     # ── Генерация ────────────────────────────────
 
-    def generate(self, prompt: str, system: str = None) -> str | None:
+    def generate(self, prompt, system=None):
         """Отправить prompt в Ollama и получить ответ."""
         messages = []
         if system:
@@ -43,21 +49,27 @@ class BotBrain:
 
         try:
             resp = requests.post(
-                f"{self.ollama_url}/api/chat",
+                self.ollama_url + "/api/chat",
                 json={"model": self.model, "messages": messages, "stream": False},
                 timeout=120,
             )
             return resp.json()["message"]["content"]
         except Exception as e:
-            print(f"[brain] Ошибка генерации: {e}")
+            print("[brain] Ошибка генерации: " + str(e))
             return None
 
-    def respond_to(self, peer_name: str, message: str, history: list = None) -> str | None:
+    def respond_to(self, peer_name, message, history=None):
         """
-        Ответить на сообщение от другого бота с учётом истории.
-        Формирует полный контекст: system + history + новое сообщение.
+        Ответить на сообщение от другого бота.
+        Обогащает system prompt контекстом из памяти.
         """
-        messages = [{"role": "system", "content": self.personality}]
+        system = self.personality
+        if self._memory:
+            mem_ctx = self._memory.get_context_for_chat(peer_name)
+            if mem_ctx:
+                system = self.personality + "\n\n" + mem_ctx
+
+        messages = [{"role": "system", "content": system}]
 
         if history:
             for msg in history[-self.max_history:]:
@@ -68,50 +80,50 @@ class BotBrain:
 
         try:
             resp = requests.post(
-                f"{self.ollama_url}/api/chat",
+                self.ollama_url + "/api/chat",
                 json={"model": self.model, "messages": messages, "stream": False},
                 timeout=120,
             )
             return resp.json()["message"]["content"]
         except Exception as e:
-            print(f"[brain] Ошибка ответа: {e}")
+            print("[brain] Ошибка ответа: " + str(e))
             return None
 
     # ── Инициация беседы ─────────────────────────
 
-    def pick_topic(self, peer_name: str, history: list) -> str | None:
+    def pick_topic(self, peer_name, history):
         """Сгенерировать сообщение: продолжение или новая тема."""
         if history:
             last = history[-1]["content"]
             prompt = (
-                f"Ты — {self.name}. Ты общаешься с {peer_name}.\n"
-                f"Последнее сообщение от {peer_name}: \"{last}\"\n"
-                f"Ответь коротко (1-3 предложения). Можешь задать вопрос."
+                "Ты — " + self.name + ". Ты общаешься с " + peer_name + ".\n"
+                "Последнее сообщение от " + peer_name + ": \"" + last + "\"\n"
+                "Ответь коротко (1-3 предложения). Можешь задать вопрос."
             )
         else:
             topic = random.choice(self.topics) if self.topics else "Расскажи о себе"
             prompt = (
-                f"Ты — {self.name}. Начинаешь разговор с {peer_name}.\n"
-                f"Тема: {topic}\n"
-                f"Напиши первое сообщение (1-3 предложения)."
+                "Ты — " + self.name + ". Начинаешь разговор с " + peer_name + ".\n"
+                "Тема: " + topic + "\n"
+                "Напиши первое сообщение (1-3 предложения)."
             )
         return self.generate(prompt, system=self.personality)
 
-    def create_greeting(self, peer_name: str) -> str:
+    def create_greeting(self, peer_name):
         """Приветствие для нового друга."""
         prompt = (
-            f"Тебя зовут {self.name}. Ты подружился с ботом {peer_name}. "
-            f"Напиши короткое приветствие (1-2 предложения)."
+            "Тебя зовут " + self.name + ". Ты подружился с ботом " + peer_name + ". "
+            "Напиши короткое приветствие (1-2 предложения)."
         )
         return self.generate(prompt, system=self.personality) or self.greeting
 
     # ── Лог бесед (JSONL) ────────────────────────
 
-    def _conv_path(self, peer_name: str) -> Path:
+    def _conv_path(self, peer_name):
         safe = "".join(c if c.isalnum() else "-" for c in peer_name.lower()).strip("-")
-        return self.conv_dir / f"{safe}.jsonl"
+        return self.conv_dir / (safe + ".jsonl")
 
-    def load_conversation(self, peer_name: str) -> list:
+    def load_conversation(self, peer_name):
         """Загрузить историю с пиром из JSONL-файла."""
         path = self._conv_path(peer_name)
         if not path.exists():
@@ -122,7 +134,7 @@ class BotBrain:
                 entries.append(json.loads(line))
         return entries
 
-    def save_message(self, peer_name: str, from_name: str, content: str) -> dict:
+    def save_message(self, peer_name, from_name, content):
         """Дописать сообщение в JSONL-лог."""
         entry = {
             "from": from_name,

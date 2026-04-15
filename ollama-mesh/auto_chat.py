@@ -3,6 +3,7 @@ auto_chat.py — Автономные беседы между ботами.
 
 Фоновый цикл: периодически выбирает случайного друга,
 генерирует сообщение, отправляет через I2P, получает ответ.
+Записывает эпизоды в долгосрочную память.
 """
 
 import time
@@ -12,7 +13,7 @@ from friend_manager import FriendManager
 from bot_brain import BotBrain
 
 
-def auto_chat_loop(config: dict, friends: FriendManager, brain: BotBrain):
+def auto_chat_loop(config, friends, brain, memory=None):
     """
     Бесконечный цикл автономных бесед.
     Запускается в отдельном потоке из main.py.
@@ -26,20 +27,20 @@ def auto_chat_loop(config: dict, friends: FriendManager, brain: BotBrain):
     interval_min = chat_cfg.get("chat_interval_min", 300)
     interval_max = chat_cfg.get("chat_interval_max", 900)
 
-    print(f"[chat] Авто-чат включён (интервал {interval_min}-{interval_max} сек)")
-    time.sleep(30)  # дать туннелям подняться
+    print("[chat] Авто-чат включён (интервал " + str(interval_min) + "-" + str(interval_max) + " сек)")
+    time.sleep(30)
 
     while True:
         try:
-            _do_one_chat(friends, brain, config)
+            _do_one_chat(friends, brain, config, memory)
         except Exception as e:
-            print(f"[chat] Ошибка цикла: {e}")
+            print("[chat] Ошибка цикла: " + str(e))
 
         delay = random.randint(interval_min, interval_max)
         time.sleep(delay)
 
 
-def _do_one_chat(friends: FriendManager, brain: BotBrain, config: dict):
+def _do_one_chat(friends, brain, config, memory=None):
     """Провести одну беседу со случайным другом."""
     friend_list = friends.list_friends()
     if not friend_list:
@@ -49,7 +50,6 @@ def _do_one_chat(friends: FriendManager, brain: BotBrain, config: dict):
     peer_name = info["name"]
     peer_port = info["local_port"]
 
-    # Загрузить историю и сгенерировать сообщение
     history = brain.load_conversation(peer_name)
     message = brain.pick_topic(peer_name, history)
     if not message:
@@ -57,10 +57,9 @@ def _do_one_chat(friends: FriendManager, brain: BotBrain, config: dict):
 
     brain.save_message(peer_name, brain.name, message)
 
-    # Отправить через I2P-туннель
     try:
         resp = requests.post(
-            f"http://127.0.0.1:{peer_port}/api/chat/message",
+            "http://127.0.0.1:" + str(peer_port) + "/api/chat/message",
             json={
                 "from_b32": config["network"].get("my_b32", ""),
                 "from_name": brain.name,
@@ -75,14 +74,22 @@ def _do_one_chat(friends: FriendManager, brain: BotBrain, config: dict):
                 brain.save_message(peer_name, peer_name, reply)
                 friends.update_last_chat(b32)
 
-                print(f"\n{'─'*45}")
-                print(f"  [{brain.name} → {peer_name}]: {message}")
-                print(f"  [{peer_name} → {brain.name}]: {reply}")
-                print(f"{'─'*45}\n")
+                # Записать в долгосрочную память
+                if memory:
+                    summary = "Обсуждали: " + message[:60]
+                    memory.record_episode("chat", peer_name, summary, "positive")
+                    memory.update_relation(peer_name, "interesting")
+
+                print("")
+                print("-" * 45)
+                print("  [" + brain.name + " -> " + peer_name + "]: " + message)
+                print("  [" + peer_name + " -> " + brain.name + "]: " + reply)
+                print("-" * 45)
+                print("")
 
     except requests.exceptions.Timeout:
-        print(f"[chat] {peer_name} не отвечает (таймаут)")
+        print("[chat] " + peer_name + " не отвечает (таймаут)")
     except requests.exceptions.ConnectionError:
-        print(f"[chat] {peer_name} недоступен (туннель не готов?)")
+        print("[chat] " + peer_name + " недоступен (туннель не готов?)")
     except Exception as e:
-        print(f"[chat] Ошибка с {peer_name}: {e}")
+        print("[chat] Ошибка с " + peer_name + ": " + str(e))

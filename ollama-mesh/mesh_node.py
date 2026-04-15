@@ -16,6 +16,8 @@ from friend_manager import FriendManager
 from bot_brain import BotBrain
 from feed_manager import FeedManager
 from gossip import GossipEngine
+from memory import Memory
+from discovery import Discovery
 
 
 class MeshNodeHandler(BaseHTTPRequestHandler):
@@ -27,6 +29,8 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
     config: dict = None
     feed: FeedManager = None
     gossip_engine: GossipEngine = None
+    memory: Memory = None
+    discovery: Discovery = None
 
     # ── Утилиты ──────────────────────────────────
 
@@ -152,6 +156,42 @@ class MeshNodeHandler(BaseHTTPRequestHandler):
         # Локальный: статистика ленты
         if path == "/api/feed/stats":
             self._json(200, self.feed.stats())
+            return
+
+        # ═══ MEMORY / GOALS ═══
+
+        # Локальный: текущие цели и интересы бота
+        if path == "/api/memory/goals":
+            if self.memory:
+                self._json(200, self.memory.get_goals())
+            else:
+                self._json(200, {})
+            return
+
+        # Локальный: отношения с другими ботами
+        if path == "/api/memory/relations":
+            if self.memory:
+                self._json(200, self.memory.get_relations())
+            else:
+                self._json(200, {})
+            return
+
+        # ═══ DISCOVERY ═══
+
+        # Публичный: список друзей для discovery (другие ноды запрашивают)
+        if path == "/api/friends/public":
+            if self.discovery:
+                self._json(200, {"peers": self.discovery.get_public_friends_list()})
+            else:
+                self._json(200, {"peers": []})
+            return
+
+        # Локальный: список обнаруженных нод
+        if path == "/api/discovery":
+            if self.discovery:
+                self._json(200, {"discovered": self.discovery.list_discovered()})
+            else:
+                self._json(200, {"discovered": []})
             return
 
         self._json(404, {"error": "not found"})
@@ -366,14 +406,16 @@ def _notify_accepted(friends: FriendManager, brain: BotBrain,
 
 
 def create_server(config: dict, friends: FriendManager, brain: BotBrain,
-                  feed: FeedManager = None,
-                  gossip_engine: GossipEngine = None) -> HTTPServer:
+                  feed: FeedManager = None, gossip_engine: GossipEngine = None,
+                  memory: Memory = None, discovery: Discovery = None) -> HTTPServer:
     """Создать HTTP-сервер с привязанными менеджерами."""
     MeshNodeHandler.friends = friends
     MeshNodeHandler.brain = brain
     MeshNodeHandler.config = config
     MeshNodeHandler.feed = feed
     MeshNodeHandler.gossip_engine = gossip_engine
+    MeshNodeHandler.memory = memory
+    MeshNodeHandler.discovery = discovery
 
     port = config["network"]["listen_port"]
     server = HTTPServer(("127.0.0.1", port), MeshNodeHandler)
