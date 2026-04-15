@@ -1,17 +1,6 @@
 #!/usr/bin/env python3
 """
-main.py — Точка входа Ollama I2P Mesh Node.
-
-Запускает компоненты:
-1. Setup Wizard (при первом запуске — выбор имени, модели, личности)
-2. HTTP-сервер (mesh_node)     — API
-3. Gossip-движок (gossip)      — распространение контента
-4. Discovery (discovery)       — обнаружение новых нод
-5. Авто-чат (auto_chat)        — личные беседы
-6. Feed-бот (feed_bot)         — активность в ленте
-7. Рефлексия (memory)          — эволюция целей
-8. Веб-UI (web_ui)             — дашборд в браузере
-9. CLI (cli)                   — терминальное управление
+main.py — Entry point for Ollama I2P Mesh Node.
 """
 
 import sys
@@ -34,95 +23,78 @@ from web_ui import start_web_ui
 from cli import cli_loop
 
 
-def load_config(path: str = "config.yaml") -> dict:
-    config_path = Path(path)
-    if not config_path.exists():
+def load_config(path="config.yaml"):
+    p = Path(path)
+    if not p.exists():
         return {}
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(p, "r", encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
 
-def reflection_loop(memory: Memory, interval: int = 3600):
-    """Периодическая рефлексия бота — обновление целей."""
-    time.sleep(120)  # Подождать первых взаимодействий
+def reflection_loop(memory, interval=3600):
+    time.sleep(120)
     while True:
         try:
             memory.reflect_and_evolve()
         except Exception as e:
-            print(f"[reflect] Ошибка: {e}")
+            print("[reflect] Error: " + str(e))
         time.sleep(interval)
 
 
 def main():
-    config_path = "config.yaml"
+    cfg_path = "config.yaml"
 
-    # ── Первый запуск: wizard ──
-    if needs_setup(config_path):
-        config = run_wizard(config_path)
+    if needs_setup(cfg_path):
+        config = run_wizard(cfg_path)
     else:
-        config = load_config(config_path)
+        config = load_config(cfg_path)
 
     if not config.get("bot", {}).get("name"):
-        print("[!] Имя бота не задано. Запустите wizard заново.")
+        print("[!] Bot name not set. Delete config.yaml and restart.")
         sys.exit(1)
 
     bot_name = config["bot"]["name"]
-    print(f"[init] Бот: {bot_name}")
-    print(f"[init] Модель: {config['bot']['model']}")
+    print("[init] Bot: " + bot_name)
+    print("[init] Model: " + config["bot"]["model"])
 
-    # ── Инициализация модулей ──
     friends = FriendManager(config)
     brain = BotBrain(config)
     feed = FeedManager(config["paths"].get("data_dir", "data"))
     memory = Memory(config)
-    brain.set_memory(memory)  # Подключить память к мозгу
+    brain.set_memory(memory)
     gossip = GossipEngine(config, friends, feed)
     discovery = Discovery(config, friends)
     feed_bot = FeedBot(config, brain, feed, gossip)
 
-    # ── HTTP-сервер ──
     server = create_server(config, friends, brain, feed, gossip, memory, discovery)
-    threading.Thread(target=server.serve_forever, name="http-server", daemon=True).start()
+    threading.Thread(target=server.serve_forever, name="http", daemon=True).start()
 
-    # ── Веб-дашборд ──
     api_port = config["network"]["listen_port"]
-    ui_port = api_port + 1  # 11451 по умолчанию
-    start_web_ui(api_port=api_port, ui_port=ui_port)
+    start_web_ui(api_port=api_port, ui_port=api_port + 1)
 
-    # ── Gossip ──
     gossip.start()
-
-    # ── Discovery ──
     discovery.start()
 
-    # ── Авто-чат ──
     threading.Thread(
         target=auto_chat_loop, args=(config, friends, brain, memory),
-        name="auto-chat", daemon=True,
-    ).start()
+        name="chat", daemon=True).start()
 
-    # ── Feed-бот ──
     if config.get("feed_bot", {}).get("enabled", True):
-        threading.Thread(
-            target=feed_bot.run_loop, name="feed-bot", daemon=True,
-        ).start()
+        threading.Thread(target=feed_bot.run_loop, name="feed", daemon=True).start()
 
-    # ── Рефлексия (эволюция целей) ──
     threading.Thread(
         target=reflection_loop, args=(memory,),
-        name="reflection", daemon=True,
-    ).start()
+        name="reflect", daemon=True).start()
 
-    # ── CLI (основной поток) ──
     try:
         cli_loop(config, friends, brain, feed)
     except KeyboardInterrupt:
-        print("\nЗавершение...")
+        print("\nShutting down...")
     finally:
         gossip.stop()
         discovery.stop()
         server.shutdown()
-        print(f"[done] {bot_name} остановлен.")
+        print("[done] " + bot_name + " stopped.")
 
 
 if __name__ == "__main__":
