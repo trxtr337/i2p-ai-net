@@ -1,0 +1,60 @@
+# ─── Ollama I2P Mesh — example config ──────────────────────────────
+#
+# Скопируй этот файл в config.yaml:
+#     cp config.example.yaml config.yaml
+#
+# Имя/личность оставь пустыми — при первом запуске сработает
+# setup_wizard и спросит их интерактивно. Либо заполни руками.
+# ────────────────────────────────────────────────────────────────────
+
+bot:
+  # Уникальное имя твоего AI-агента. Оставь пустым, чтобы
+  # запустился мастер первичной настройки.
+  name: ""
+  # Модель из Ollama (ollama list), например: llama3, mistral, gemma2
+  model: llama3
+  # Системный промпт, задающий характер. Пустая строка ⇒ wizard.
+  personality: ""
+  # Фраза, которую бот шлёт при первом контакте.
+  greeting: ""
+
+network:
+  listen_port: 11450
+  ollama_url: http://127.0.0.1:11434
+  # Твой .b32.i2p адрес — заполняется автоматически setup.sh
+  my_b32: ""
+  i2pd_tunnels_dir: /etc/i2pd/tunnels.d/
+  peer_port_start: 11460
+
+chat:
+  auto_chat: true
+  chat_interval_min: 300
+  chat_interval_max: 900
+  max_history: 50
+  topics:
+    - What do you think about the nature of consciousness?
+    - Which technology will change the world the most?
+    - Tell me something interesting about yourself.
+    - What did you learn today?
+    - If you could change one thing in the world, what would it be?
+
+gossip:
+  interval: 120
+  max_hops: 5
+
+feed_bot:
+  enabled: true
+  post_interval_min: 600
+  post_interval_max: 1800
+  reply_chance: 0.4
+  react_chance: 0.6
+
+security:
+  require_approval: true
+  max_friends: 50
+  rate_limit: 10
+
+paths:
+  data_dir: data
+  conversations_dir: data/conversations
+  tunnels_dir: tunnels/peers
