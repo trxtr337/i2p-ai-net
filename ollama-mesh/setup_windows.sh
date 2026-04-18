@@ -157,12 +157,93 @@ fi
 echo ""
 echo "=== 5. Python dependencies ==="
 cd "$MESH_DIR"
-if [ -d ".venv" ]; then
-    source .venv/bin/activate 2>/dev/null || source .venv/Scripts/activate 2>/dev/null
+
+# --- 5a. Detect a usable Python (>=3.10) -----------------------------------
+PYTHON=""
+for CAND in python python3; do
+    if command -v "$CAND" &>/dev/null; then
+        if "$CAND" -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" 2>/dev/null; then
+            PYTHON="$CAND"
+            break
+        fi
+    fi
+done
+# On Windows the py-launcher is often the only thing in PATH
+if [ -z "$PYTHON" ] && command -v py &>/dev/null; then
+    if py -3 -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" 2>/dev/null; then
+        PYTHON="py -3"
+    fi
 fi
-pip install -r requirements.txt 2>/dev/null || pip install requests pyyaml 2>/dev/null || \
-pip install --user requests pyyaml 2>/dev/null
-echo "[ok] Dependencies installed"
+
+if [ -z "$PYTHON" ]; then
+    echo "[!] Python 3.10+ not found."
+    echo "    Install it from: https://www.python.org/downloads/windows/"
+    echo "    When installing, tick 'Add python.exe to PATH'."
+    exit 1
+fi
+PY_VER=$($PYTHON -c "import sys; print('.'.join(map(str, sys.version_info[:3])))")
+echo "[ok] Python $PY_VER ($PYTHON)"
+
+# --- 5b. Locate or create .venv --------------------------------------------
+# Смотрим в двух местах, чтобы не плодить дубли:
+#   1) корень репо (i2p-ai-net/.venv)  -- если юзер уже сделал его руками
+#   2) ollama-mesh/.venv               -- локальный для подпроекта
+# Если ни там ни там -- создаём в ollama-mesh/.venv.
+REPO_ROOT="$(cd "$MESH_DIR/.." && pwd)"
+
+venv_python_path() {
+    # $1 = path to a .venv dir -- prints path to python inside if valid
+    if [ -f "$1/Scripts/python.exe" ]; then
+        echo "$1/Scripts/python.exe"
+    elif [ -f "$1/bin/python" ]; then
+        echo "$1/bin/python"
+    fi
+}
+
+VENV_PY=""
+VENV_DIR=""
+for DIR in "$REPO_ROOT/.venv" "$MESH_DIR/.venv"; do
+    P=$(venv_python_path "$DIR")
+    if [ -n "$P" ]; then
+        VENV_PY="$P"
+        VENV_DIR="$DIR"
+        echo "[ok] Found existing venv: $VENV_DIR"
+        break
+    fi
+done
+
+if [ -z "$VENV_PY" ]; then
+    VENV_DIR="$MESH_DIR/.venv"
+    echo "[*] Creating virtualenv at $VENV_DIR ..."
+    if ! $PYTHON -m venv "$VENV_DIR"; then
+        echo "[!] Failed to create $VENV_DIR. Is the 'venv' module available?"
+        echo "    Try:  $PYTHON -m pip install --user virtualenv"
+        echo "    Then: $PYTHON -m virtualenv \"$VENV_DIR\""
+        exit 1
+    fi
+    VENV_PY=$(venv_python_path "$VENV_DIR")
+    if [ -z "$VENV_PY" ]; then
+        echo "[!] $VENV_DIR created but has no python. Delete it and rerun."
+        exit 1
+    fi
+fi
+echo "[ok] Using venv python: $VENV_PY"
+
+# --- 5c. Install requirements (errors visible this time) -------------------
+"$VENV_PY" -m pip install --upgrade pip >/dev/null 2>&1 || true
+if ! "$VENV_PY" -m pip install -r requirements.txt; then
+    echo "[!] pip install failed -- see output above."
+    echo "    Check your network and re-run: bash setup_windows.sh"
+    exit 1
+fi
+
+# --- 5d. Verify imports actually work --------------------------------------
+if ! "$VENV_PY" -c "import yaml, requests" 2>/dev/null; then
+    echo "[!] 'import yaml, requests' failed after install. Venv is broken."
+    echo "    Delete .venv and re-run setup."
+    exit 1
+fi
+echo "[ok] Dependencies installed and verified"
 
 # === 6. Ollama model ===
 echo ""
@@ -244,7 +325,17 @@ fi
 echo ""
 echo "  Setup complete!"
 echo ""
-echo "  Run:     python main.py"
+echo "  Run (Git Bash):  $VENV_PY main.py"
+echo "  Run (cmd/PS):    .venv\\Scripts\\python.exe main.py"
+echo ""
+echo "  Or activate the venv first:"
+echo "    Git Bash:  source $VENV_DIR/Scripts/activate  &&  python main.py"
+echo "    cmd.exe:   $VENV_DIR\\Scripts\\activate      &&  python main.py"
+echo ""
 echo "  Web UI:  http://localhost:11451"
 echo "  i2pd:    http://localhost:7070"
+echo ""
+echo "  Tip for VS Code:  Ctrl+Shift+P -> 'Python: Select Interpreter'"
+echo "                    -> pick $VENV_PY"
+echo "                    (otherwise Pylance wont see yaml/requests)"
 echo ""
